@@ -1,0 +1,20 @@
+#!/bin/bash
+docker login -u="opusvl+nhsdigital" -p="ZCHNP0UANHIRSQXRG4EJXN4DZAHD415QJCZVJ2FXZKMZ2RUNTRUWX649PCFOJHX7" quay.io
+mkdir -p /srv/container-deployment/odoo/etc
+mkdir -p /srv/container-volumes
+cp /home/gpitsupport/deploy/odoo.conf /srv/containter-deployment/odoo/etc
+cp /home/gpitsupport/deploy/docker-compose.yml /srv/containter-deployment/
+cp /home/gpitsupport/deploy/.env /srv/containter-deployment/
+cp /home/gpitsupport/deploy/odoo_permissions.sh /srv/containter-deployment/
+sed -i -e 's/${rds_host}/'$1'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${rds_pass}/'$2'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${admin_pass}/'$3'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${odoo_password}/'$2'/g' /srv/containter-deployment/odoo/etc/.env
+sed -i -e 's/${postgres_password}/'$4'/g' /srv/containter-deployment/odoo/etc/.env
+sed -i -e 's/${odoo_image_version}/'$5'/g' /srv/containter-deployment/odoo/etc/.env
+sed -i -e 's/${odoo_image}/'$6'/g' /srv/containter-deployment/odoo/etc/.env
+systemctl restart docker
+cd /srv/container-deployment
+docker-compose down -v --rmi all --remove-orphans
+docker-compose pull
+docker-compose up -d && bash ./odoo_permissions.sh
