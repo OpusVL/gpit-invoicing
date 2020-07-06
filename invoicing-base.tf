@@ -9,6 +9,7 @@ resource "aws_lb" "gpit-invoicing-alb" {
   load_balancer_type = "application"
   security_groups    = var.alb_security_groups
   subnets            = var.gpit_invoicing_subnets
+  idle_timeout       = 3600
 
   enable_deletion_protection = false
 }
@@ -54,7 +55,7 @@ resource "aws_lb_target_group" "gpit-invoicing-appserver" {
     path = "/web/login"
     port = "traffic-port"
     timeout = 30
-    matcher = "200-299"
+    matcher = "200-399"
   }
   vpc_id    = var.gpit_invoicing_vpc
 }
@@ -62,7 +63,7 @@ resource "aws_lb_target_group" "gpit-invoicing-appserver" {
 #File for copying config files and starting odoo, passing in the values for the config file filtering
 data "template_file" "start_odoo" {
   template = <<EOF
-    bash /home/gpitsupport/deploy/start ${module.db.this_db_instance_address} ${var.odoo_password} ${var.odoo_admin_pass} ${var.postgres_password} ${var.odoo_image_version} ${var.odoo_image}
+    bash /home/gpitsupport/deploy/start ${module.db.this_db_instance_address} ${var.odoo_password} ${var.odoo_admin_pass} ${var.postgres_password} ${var.odoo_image_version} ${var.odoo_image} ${var.limit_memory_hard} ${var.limit_memory_soft} ${var.limit_time_cpu} ${var.limit_time_real} ${var.max_cron_threads} ${var.smtp_password} ${var.smtp_port} ${var.smtp_server} ${var.num_workers}
   EOF
 }
 
@@ -113,8 +114,9 @@ module "db" {
   instance_class    = "db.m4.xlarge"
   allocated_storage = 20
   storage_encrypted = true
+  multi_az = true
 
-  publicly_accessible = false
+  publicly_accessible = true
 
   # kms_key_id        = "arm:aws:kms:<region>:<account id>:key/<kms key id>"
   name = "odoo"

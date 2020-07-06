@@ -1,4 +1,20 @@
 #!/bin/bash
+
+#$1 = db_instance_address
+#$2 = odoo_password
+#$3 = odoo_admin_pass
+#$4 = postgres_password
+#$5 = odoo_image_version
+#$6 = odoo_image
+#$7 = limit_memory_hard
+#$8 = limit_memory_soft
+#$9 = limit_time_cpu
+#$10 = limit_time_real
+#$11 = max_cron_threads
+#$12 = smtp_password
+#$13 = smtp_port
+#$14 = smtp_server
+#$15 = num_workers
 docker login -u="opusvl+nhsdigital" -p="ZCHNP0UANHIRSQXRG4EJXN4DZAHD415QJCZVJ2FXZKMZ2RUNTRUWX649PCFOJHX7" quay.io
 mkdir -p /srv/container-deployment/odoo/etc
 mkdir -p /srv/container-volumes
@@ -9,6 +25,15 @@ cp /home/gpitsupport/deploy/odoo_permissions.sh /srv/containter-deployment/
 sed -i -e 's/${rds_host}/'$1'/g' /srv/containter-deployment/odoo/etc/odoo.conf
 sed -i -e 's/${rds_pass}/'$2'/g' /srv/containter-deployment/odoo/etc/odoo.conf
 sed -i -e 's/${admin_pass}/'$3'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${limit_memory_hard}/'$7'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${limit_memory_soft}/'$8'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${limit_time_cpu}/'$9'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${limit_time_real}/'${10}'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${max_cron_threads}/'${11}'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${smtp_password}/'${12}'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${smtp_port}/'${13}'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${smtp_server}/'${14}'/g' /srv/containter-deployment/odoo/etc/odoo.conf
+sed -i -e 's/${num_workers}/'${15}'/g' /srv/containter-deployment/odoo/etc/odoo.conf
 sed -i -e 's/${odoo_password}/'$2'/g' /srv/containter-deployment/odoo/etc/.env
 sed -i -e 's/${postgres_password}/'$4'/g' /srv/containter-deployment/odoo/etc/.env
 sed -i -e 's/${odoo_image_version}/'$5'/g' /srv/containter-deployment/odoo/etc/.env
