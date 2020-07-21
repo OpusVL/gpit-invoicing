@@ -18,7 +18,7 @@ variable "postgres_password" {
     description = "Root database user password"
 }
 
-variable "odoo_password" {
+variable "rds_password" {
     description = "Root database user password"
 }
 
@@ -31,10 +31,6 @@ variable "alb_security_groups" {
 }
 
 variable "gpit_invoicing_subnets" {
-    description = "All subnets used by invoicing solution"
-}
-
-variable "gpit_invoicing_elastic_ips" {
     description = "All subnets used by invoicing solution"
 }
 
@@ -74,30 +70,26 @@ variable "odoo_admin_pass" {
     description = "Odoo master password"
 }
 
-variable "limit_memory_hard" {
-    description = "hard limit for worker memory"
-}
-variable "limit_memory_soft"  {
-    description = "soft limit for worker memory"
-}
 variable "limit_time_cpu"  {
     description = "limit cpu seconds per worker"
 }
+
 variable "limit_time_real"  {
     description = "limit actual seconds per worker"
 }
-variable "max_cron_threads" {
-    description = "max number of cron running threads. Calculation: https://gist.github.com/Guidoom/d5db0a76ce669b139271a528a8a2a27f"
-}
+
 variable "smtp_password" {
     description = "password for smtp server"
 }
-variable "smtp_port" {
-    description = "smtp port"
+
+variable "hosted_zone_id" {
+    description = "ID of hosted zone in route 53 to add alias record to"
 }
-variable "smtp_server" {
-    description = "smtp server address"
+
+variable "odoo_cron_db" {
+    description = "db to run cron on"
 }
-variable "num_workers" {
-    description = "max number of worker threads. Calculation: https://gist.github.com/Guidoom/d5db0a76ce669b139271a528a8a2a27f"
+
+variable "iam_profile" {
+    description = "arn of the iam profile for this instance for cloudwatch "
 }
