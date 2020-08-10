@@ -1,5 +1,5 @@
 .terraform
 terraform.tfstate
 *.tfstate*
-terraform.tfvars
+*.tfvars
 nppBackup
