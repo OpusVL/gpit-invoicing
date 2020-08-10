@@ -431,7 +431,7 @@ resource "aws_launch_template" "gpit-invoicing-appserver-lt" {
   block_device_mappings {
     device_name = "/dev/sda1"
     ebs {
-      volume_size = 50
+      volume_size = 30
       encrypted = true
       delete_on_termination = true
     }
