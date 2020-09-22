@@ -42,7 +42,6 @@ variable "gpit_invoicing_ami" {
 
 variable "odoo_image" {
     description = "Odoo image to pull"
-    default = "quay.io/opusvl/gpit"
 }
 
 variable "odoo_image_version" {
@@ -135,4 +134,24 @@ variable bastion_ami {
 variable support_cidr_blocks {
     description = "CIDRs to allow SSH access to bastion host"
     default = ["0.0.0.0/0"]
+}
+
+variable kms_key_id {
+    description = "ARN of key from KMS to use for encyptions"
+}
+
+variable db_size_in_gb {
+    description = "size of database in gigabytes"
+}
+
+variable s3_bucket_name {
+    description = "name of s3 bucket to store odoo files"
+}
+
+variable app_server_key_name {
+	description = "key name for the app server"
+}
+
+variable bastion_host_key_name {
+	description = "key name for the bastion host"
 }

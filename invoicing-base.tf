@@ -258,7 +258,7 @@ resource "aws_instance" "invoicing-bastion-server" {
   #iam_instance_profile        = var.iam_profile
   associate_public_ip_address = true
 
-  key_name = "bastion_host"
+  key_name = var.bastion_host_key_name
 
   subnet_id = aws_subnet.invoicing-public-subnets.*.id[0]
 }
@@ -379,11 +379,15 @@ Content-Disposition: attachment; filename="userdata.txt"
 
 #!/bin/bash
 mkdir -p /root/deploy
-aws s3 sync s3://container-volumes /srv/container-volumes
-cat << TAC > /root/deploy/invoicing-crontab
-*/5 * * * * aws s3 sync /srv/container-volumes s3://container-volumes
-TAC
-crontab -u root /root/deploy/invoicing-crontab
+aws s3 sync s3://"${var.s3_bucket_name}" /srv/container-volumes --delete
+watchman watch-project /srv/container-volumes
+watchman -j <<-EOT
+["trigger", "/srv/container-volumes", {
+  "name": "containervolumes",
+  "expression": ["match", "**/*", "wholename"],
+  "command": ["aws", "s3", "sync", "/srv/container-volumes", "s3://${var.s3_bucket_name}", "--delete"]
+}]
+EOT
 cat << TAC > /root/deploy/start
 docker login -u="${var.docker_login}" -p="${var.docker_login_password}" quay.io
 mkdir -p /srv/container-deployment/invoicing/odoo/etc
@@ -425,7 +429,7 @@ resource "aws_launch_template" "gpit-invoicing-appserver-lt" {
   image_id               = var.gpit_invoicing_ami
   instance_type          = var.app_server_instance_type
   vpc_security_group_ids = [aws_security_group.invoicing-app-server-rules.id]
-  key_name               = "app-server"
+  key_name               = var.app_server_key_name
   user_data              = base64encode(data.template_file.start_odoo.rendered)
 
   block_device_mappings {
@@ -468,16 +472,17 @@ module "db" {
   identifier = "gpit-invoicing-db"
 
   engine            = "postgres"
-  engine_version    = "12.2"
+  engine_version    = "12.3"
   instance_class    = "db.m4.xlarge"
-  allocated_storage = 50
+  allocated_storage = var.db_size_in_gb
   max_allocated_storage = 100
   storage_encrypted = true
   multi_az = true
+  #kms_key_id = var.kms_key_id
 
   publicly_accessible = var.global_enable_deletion_protection ? false : true
 
-  name = "odoo"
+  #name = "odoo"
   #Database user
   username = var.postgres_user
   #Database user password
