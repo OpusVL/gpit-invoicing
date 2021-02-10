@@ -1,42 +1,39 @@
-version: "3.7"
+version: '3.2'
 
 # Odoo Container
 
-#docker pull quay.io/opusvl/gpit:staging
 #arn:aws:secretsmanager:eu-west-2:136182278273:secret:gpit-odoo-image-L9I2RP
 
 # .env contains all the container specific details
 
 services:
   odoo:
-    image: ${ODOO_IMAGE:-odoo}:${ODOO_IMAGE_VERSION:-latest}
+    &odoo
+    image: ${ODOO_IMAGE}:${ODOO_IMAGE_VERSION}
     volumes:
-      - "${CONTAINER_VOLUME}/odoo/:/var/lib/odoo:rw"
-      - "${PWD}/odoo/etc/:/etc/odoo:rw"
-      - "/etc/ssl/openssl.cnf:/etc/ssl/openssl.cnf:ro"
+    - "${CONTAINER_VOLUME}/invoicing/odoo/extra-addons:/mnt/extra-addons:rw"
+    - "./odoo/etc/:/etc/odoo:rw"
     ports:
-      - "8069:8069"
-      - "8070:8072"
+    - "8069:8069"
+    - "8070:8072"
     environment:
-      USER: "${ODOO_POSTGRES_USER:-odoo}"
-      PASSWORD: "${ODOO_POSTGRES_PASSWORD:-odoo}"
-      HOST: db
-      # Upgrade the database the website is pointing at on /upgrade
-      ODOO_UPGRADE_DB_NAME: "${ODOO_DATABASE:-odoo}"
-    command: --max-cron-threads 0 --workers 5
-    restart: always
+      USER: "${ODOO_POSTGRES_USER}"
+      PASSWORD: "${ODOO_POSTGRES_PASSWORD}"
+    command: --max-cron-threads 0 --workers 8 --log-handler=:INFO
+    restart: unless-stopped
+    logging:
+      driver: 'syslog'
+      options:
+        syslog-address: 'udp://127.0.0.1:514'
+        tag: 'odoo'
 
   odoo-cron:
-    image: ${ODOO_IMAGE:-odoo}:${ODOO_IMAGE_VERSION:-latest}
-    volumes:
-      - "${CONTAINER_VOLUME}/odoo/extra-addons:/mnt/extra-addons:rw"
-      - "${CONTAINER_VOLUME}/odoo/var:/var/lib/odoo:rw"
-      - "${PWD}/odoo/etc:/etc/odoo:rw"
-    environment:
-      USER: "${ODOO_POSTGRES_USER:-odoo}"
-      PASSWORD: "${ODOO_POSTGRES_PASSWORD:-odoo}"
-      HOST: db
-      # Upgrade the database the website is pointing at on /upgrade
-      ODOO_UPGRADE_DB_NAME: "${ODOO_DATABASE:-odoo}"
-    command: --max-cron-threads 8 --no-xmlrpc --database ${ODOO_CRON_DB:-odoo}
-    restart: always
+    << : *odoo
+    ports: 
+    - "8072"
+    command: --max-cron-threads 8 --no-xmlrpc --database ${ODOO_CRON_DB}
+    logging:
+      driver: 'syslog'
+      options:
+        syslog-address: 'udp://127.0.0.1:514'
+        tag: 'odoo-cron'

@@ -389,34 +389,45 @@ watchman -j <<-EOT
 }]
 EOT
 cat << TAC > /root/deploy/start
-docker login -u="${var.docker_login}" -p="${var.docker_login_password}" quay.io
+docker login -u="${var.docker_login}" -p="${var.docker_login_password}" ${var.odoo_image}
+mkdir -p /srv/container-deployment/syslog-ng
 mkdir -p /srv/container-deployment/invoicing/odoo/etc
 mkdir -p /srv/container-volumes/odoo
 mkdir -p /srv/logs
-curl -o /srv/container-deployment/invoicing/odoo/etc/odoo.conf https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/odoo.conf
-curl -o /srv/container-deployment/invoicing/docker-compose.yml https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/docker-compose.yml
+gpasswd -a ubuntu docker
+apt -y install postgresql-client
+curl -o /srv/container-deployment/invoicing/odoo/etc/odoo.conf.tpl https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/odoo.conf.tpl
+curl -o /srv/container-deployment/invoicing/docker-compose.yml.tpl https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/docker-compose.yml.tpl
 curl -o /srv/container-deployment/invoicing/.env https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/.env
-curl -o /srv/container-deployment/invoicing/odoo_permissions.sh https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/odoo_permissions.sh
+curl -o /srv/container-deployment/invoicing/odoo_permissions.sh.tpl https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/odoo_permissions.sh.tpl
+curl -o /srv/container-deployment/invoicing/template.sh https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/template.sh
 curl -o /etc/ssl/openssl.cnf https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/openssl.cnf
-chmod +x /srv/container-deployment/invoicing/odoo_permissions.sh
-sed -i -r -e 's|[$]\{rds_host\}|${module.db.this_db_instance_address}|g' /srv/container-deployment/invoicing/odoo/etc/odoo.conf
-sed -i -r -e 's|[$]\{rds_pass\}|${var.rds_password}|g' /srv/container-deployment/invoicing/odoo/etc/odoo.conf
-sed -i -r -e 's|[$]\{admin_pass\}|${var.odoo_admin_pass}|g' /srv/container-deployment/invoicing/odoo/etc/odoo.conf
-sed -i -r -e 's|[$]\{limit_time_cpu\}|${var.limit_time_cpu}|g' /srv/container-deployment/invoicing/odoo/etc/odoo.conf
-sed -i -r -e 's|[$]\{limit_time_real\}|${var.limit_time_real}|g' /srv/container-deployment/invoicing/odoo/etc/odoo.conf
-sed -i -r -e 's|[$]\{smtp_password\}|${var.smtp_password}|g' /srv/container-deployment/invoicing/odoo/etc/odoo.conf
-sed -i -r -e 's|[$]\{odoo_password\}|${var.rds_password}|g' /srv/container-deployment/invoicing/.env
-sed -i -r -e 's|[$]\{postgres_password\}|${var.postgres_password}|g' /srv/container-deployment/invoicing/.env
-sed -i -r -e 's|[$]\{odoo_image_version\}|${var.odoo_image_version}|g' /srv/container-deployment/invoicing/.env
-sed -i -r -e 's|[$]\{odoo_image\}|${var.odoo_image}|g' /srv/container-deployment/invoicing/.env
-sed -i -r -e 's|[$]\{odoo_cron_db\}|${var.odoo_cron_db}|g' /srv/container-deployment/invoicing/.env
-systemctl restart docker
+chmod +x /srv/container-deployment/invoicing/*.sh
+cd /srv/container-deployment/invoicing/syslog-ng
+docker-compose pull
+docker-compose up -d
 cd /srv/container-deployment/invoicing
+echo "ADMIN_PASS=${var.admin_pass}" > .env
+echo "CONTAINER_VOLUME=/srv/container-volumes" >> .env
+echo "LIMIT_MEMORY_HARD=${var.limit_memory_hard}" >> .env
+echo "LIMIT_MEMORY_SOFT=${var.limit_memory_soft}" >> .env
+echo "LIMIT_TIME_CPU=${var.limit_time_cpu}" >> .env
+echo "LIMIT_TIME_REAL=${var.limit_time_real}" >> .env
+echo "ODOO_CRON_DB=${var.odoo_cron_db}" >> .env
+echo "ODOO_IMAGE=${var.odoo_image}" >> .env
+echo "ODOO_IMAGE_VERSION=${var.odoo_image_version}" >> .env
+echo "ODOO_POSTGRES_PASSWORD=${var.odoo_password}" >> .env
+echo "ODOO_POSTGRES_USER=odoo" >> .env
+echo "POSTGRES_PASSWORD=${var.postgres_password}" >> .env
+echo "RDS_PASS=${var.rds_pass}" >> .env
+echo "SMTP_PASSWORD=${var.smtp_password}" >> .env
+chmod +x template
+./template.sh
+docker-compose pull
 docker-compose up -d && ./odoo_permissions.sh
 TAC
 chmod +x /root/deploy/start
 /bin/bash /root/deploy/start
-docker-compose logs -f odoo-cron > /srv/logs/odoo-cron.log 2>&1 & docker-compose logs -f odoo > /srv/logs/odoo.log 2>&1 &
 --//
 EOF
 }
@@ -497,7 +508,7 @@ module "db" {
   backup_window      = "03:00-06:00"
 
   # disable backups to create DB faster
-  backup_retention_period = 7
+  backup_retention_period = 35
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
