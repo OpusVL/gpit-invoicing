@@ -1,0 +1,12 @@
+/var/log/keycloak.log
+/var/log/odoo.log
+/var/log/odoo-cron.log
+/var/log/postgres.log
+{
+        rotate 31
+        daily
+        missingok
+        notifempty
+        delaycompress
+        compress
+}

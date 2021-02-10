@@ -1,11 +1,12 @@
-version: '3.7'
+version: '3.2'
 
 services:
   syslog:
-    image: balabit/syslog-ng
+    build: build
     volumes: 
-      - "./syslog-ng.conf:/etc/syslog-ng/syslog-ng.conf"    
-      - "/srv/container-volumes/logs:/var/log"
+      - "./syslog/syslog-ng.conf:/etc/syslog-ng/syslog-ng.conf"    
+      - "./syslog/logrotate.d/odoo:/etc/logrotate.d/odoo"
+      - "/srv/container-volumes/log:/var/log"
     ports:
       - "127.0.0.1:514:514/udp"
     restart: always
