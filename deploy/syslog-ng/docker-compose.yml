@@ -4,7 +4,7 @@ services:
   syslog:
     build: build
     volumes: 
-      - "./syslog/syslog-ng.conf:/etc/syslog-ng/syslog-ng.conf"    
+      - "./syslog/odoo.conf:/etc/syslog-ng/conf.d/odoo.conf"    
       - "./syslog/logrotate.d/odoo:/etc/logrotate.d/odoo"
       - "/srv/container-volumes/log:/var/log"
     ports:
