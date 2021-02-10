@@ -5,7 +5,7 @@ services:
     image: balabit/syslog-ng
     volumes: 
       - "./syslog-ng.conf:/etc/syslog-ng/syslog-ng.conf"    
-      - "/srv/logs:/var/log"
+      - "/srv/container-volumes/logs:/var/log"
     ports:
       - "127.0.0.1:514:514/udp"
     restart: always

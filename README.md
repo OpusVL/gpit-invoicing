@@ -117,7 +117,7 @@ chmod +x /root/deploy/start
 
 The simple description is that it uses a HEREDOC to `cat` the commands into `/root/deploy/start` then makes the script executable and runs it.
 
-It creates the `.env` file from the variables in the `uat.auth.vars`.
+It creates the `.env` file from the variables in the `uat.auto.vars`. File __NOT__ included in repo due to sensitive data.
 
 Using `curl` it pulls down `.tpl` files from the repo and runs the `template` script on them to replace template variables with environment variable values.
 
