@@ -12,6 +12,10 @@ variable "postgres_user" {
     description = "Root database user"
 }
 
+variable "odoo_postgres_password" {
+    description = "Odoo database user password"
+}
+
 variable "postgres_password" {
     description = "Root database user password"
 }

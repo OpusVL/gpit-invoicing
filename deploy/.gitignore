@@ -1,2 +1,4 @@
 odoo_permissions.sh
 odoo.conf
+uat.plan
+deploy/config.json
