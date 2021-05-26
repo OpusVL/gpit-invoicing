@@ -1,0 +1,33 @@
+---
+# file: config-tasks.yml
+
+- name: Copy motd
+  ansible.builtin.copy:
+    src: motd
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: '0644'  
+
+- name: Create container-volumes path
+  file:
+    path: /srv/container-volumes
+    state: directory
+
+- name: Mount S3 bucket into container-volumes
+  ansible.posix.mount:
+    src: s3fs
+    path: /srv/container-volumes
+    fstype: fuse
+    opts: rw,_netdev,allow_other,bucket=container-volumes-uat2,endpoint=eu-west-2,iam_role=auto
+    state: mounted    
+
+# There seems to be an issue with using more than one s3fs mount in fstab.  
+# As a work a round it is recommended to use a cron job at reboot to achieve 
+# the same result.
+
+- name: Mount S3 bucket into databasedumps using cron
+  ansible.builtin.cron:
+    name: "databasedumps"
+    special_time: reboot
+    job: "s3fs databasedumps-uat2 /srv/databasedumps -o rw,_netdev,allow_other,endpoint=eu-west-2,iam_role=auto,suid,users"

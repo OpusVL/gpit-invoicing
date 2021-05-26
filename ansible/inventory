@@ -1,0 +1,2 @@
+[appservers]
+appserver_uat2 ansible_user=ubuntu

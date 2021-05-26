@@ -1,0 +1,60 @@
+---
+# file: package-tasks.yml
+
+- name: Add docker key to apt
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+    state: present
+
+- name: Add docker repository into sources list
+  ansible.builtin.apt_repository:
+    repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable
+    state: present
+
+- name: Install base packages
+  ansible.builtin.package:
+    name:
+    - apt-transport-https
+    - ca-certificates
+    - containerd.io
+    - curl
+    - docker
+    - docker-ce
+    - docker-ce-cli
+    - git
+    - gnupg
+    - lsb-release
+    - postgresql-client
+    - s3fs
+    - zsh
+    state: latest
+
+- name: Download docker-compose
+  get_url: 
+    url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+
+- name: Add default user into the docker group
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes
+
+- name: Install antigen
+  get_url:
+    url: https://git.io/antigen
+    dest: /home/ubuntu/antigen.zsh
+    owner: ubuntu
+    group: ubuntu
+    mode: '0664'
+
+- name: Configure zsh
+  ansible.builtin.copy:
+    src: zshrc
+    dest: /home/ubuntu/.zshrc
+    owner: ubuntu
+    group: ubuntu
+    mode: '0664'
+  

@@ -1,0 +1,8 @@
+---
+# file: playbook.yml
+- name: Setup GPIT appserver AMI
+  hosts: appservers
+  become: yes
+  become_method: sudo
+  roles:
+    - appservers

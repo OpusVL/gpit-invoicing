@@ -8,7 +8,7 @@ GP IT Futures invoicing system
 
 PostgreSQL - Amazon RDS Database
 
-Odoo Container Set - Odoo and syslog-ng services
+Odoo Container Set
 
 OpusVL Documentation: [Link](https://wiki.opusvl.io/wiki/GPIT_-_Amazon_AWS#Terraform_.2F_aws-vault)
 
@@ -29,10 +29,11 @@ services:
       USER: odoo
     image: registry.deploy.opusvl.net/gp-it-futures/odoo:uat
     logging:
-      driver: syslog
+      driver: 'awslogs'
       options:
-        syslog-address: udp://127.0.0.1:514
-        tag: odoo
+        awslogs-region: 'eu-west-2'
+        awslogs-group: '/srv/logs/odoo.log'
+
     ports:
     - published: 8069
       target: 8069
@@ -49,10 +50,10 @@ services:
       USER: odoo
     image: registry.deploy.opusvl.net/gp-it-futures/odoo:uat
     logging:
-      driver: syslog
+      driver: 'awslogs'
       options:
-        syslog-address: udp://127.0.0.1:514
-        tag: odoo-cron
+        awslogs-region: 'eu-west-2'
+        awslogs-group: '/srv/logs/odoo-cron.log'
     ports:
     - target: 8072
     restart: unless-stopped

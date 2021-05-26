@@ -6,7 +6,7 @@
 # Configures a backend in AWS to store the state of the terraform managed infrastructure
 terraform {  
     backend "s3" {
-        bucket  = "invoicing-terraform-backend-store"
+        bucket  = "invoicing-terraform-backend-store-uat2"
         encrypt = true
         key    = "terraform.tfstate"    
         region = "eu-west-2"
@@ -481,7 +481,7 @@ module "db" {
   identifier = "gpit-invoicing-db"
 
   engine            = "postgres"
-  engine_version    = "12.3"
+  engine_version    = "12.5"
   instance_class    = "db.m4.xlarge"
   allocated_storage = var.db_size_in_gb
   max_allocated_storage = 100

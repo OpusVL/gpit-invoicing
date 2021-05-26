@@ -1,0 +1,8 @@
+---
+# tasks file for appserver
+
+- name: packages
+  import_tasks: package-tasks.yml
+
+- name: config
+  import_tasks: config-tasks.yml  
