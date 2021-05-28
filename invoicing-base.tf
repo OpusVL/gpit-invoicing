@@ -379,36 +379,16 @@ Content-Disposition: attachment; filename="userdata.txt"
 
 #!/bin/bash
 mkdir -p /root/deploy
-aws s3 sync s3://"${var.s3_bucket_name}" /srv/container-volumes --delete
-watchman watch-project /srv/container-volumes
-watchman -j <<-EOT
-["trigger", "/srv/container-volumes", {
-  "name": "containervolumes",
-  "expression": ["match", "**/*", "wholename"],
-  "command": ["aws", "s3", "sync", "/srv/container-volumes", "s3://${var.s3_bucket_name}", "--delete"]
-}]
-EOT
 cat << TAC > /root/deploy/start
-docker login -u="${var.docker_login}" -p="${var.docker_login_password}" ${var.odoo_image}
-mkdir -p /srv/container-deployment/syslog-ng
+echo "${var.docker_login_password}" | docker login --username="${var.docker_login}" --password-stdin ${var.odoo_image}
+git clone https://github.com/OpusVL/gpit-aws-odoo.git /srv/container-deployment/invoicing
 mkdir -p /srv/container-deployment/invoicing/odoo/etc
 mkdir -p /srv/container-volumes/odoo
-mkdir -p /srv/logs
-gpasswd -a ubuntu docker
-apt -y install postgresql-client zsh curl
-curl -o /srv/container-deployment/invoicing/odoo/etc/odoo.conf.tpl https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/odoo.conf.tpl
-curl -o /srv/container-deployment/invoicing/docker-compose.yml.tpl https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/docker-compose.yml.tpl
-curl -o /srv/container-deployment/invoicing/.env https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/.env
-curl -o /srv/container-deployment/invoicing/odoo_permissions.sh.tpl https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/odoo_permissions.sh.tpl
-curl -o /srv/container-deployment/invoicing/template.sh https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/template.sh
-curl -o /etc/ssl/openssl.cnf https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/openssl.cnf
-chmod +x /srv/container-deployment/invoicing/*.sh
-cd /srv/container-deployment/invoicing/syslog-ng
-docker-compose pull
-docker-compose up -d
 cd /srv/container-deployment/invoicing
 echo "ADMIN_PASS=${var.odoo_admin_pass}" > .env
 echo "CONTAINER_VOLUME=/srv/container-volumes" >> .env
+echo "DB_HOST=${module.db.this_db_instance_address}" >> .env
+echo "DB_PORT=${module.db.this_db_instance_port}" >> .env
 echo "LIMIT_TIME_CPU=${var.limit_time_cpu}" >> .env
 echo "LIMIT_TIME_REAL=${var.limit_time_real}" >> .env
 echo "ODOO_CRON_DB=${var.odoo_cron_db}" >> .env
@@ -419,10 +399,14 @@ echo "ODOO_POSTGRES_USER=odoo" >> .env
 echo "POSTGRES_PASSWORD=${var.postgres_password}" >> .env
 echo "RDS_PASS=${var.rds_password}" >> .env
 echo "SMTP_PASSWORD=${var.smtp_password}" >> .env
-chmod +x template
-./template.sh
+echo "HOST=${var.host}" >> .env
+echo "ICINGA_HOST=${var.icinga_host}" >> .env
+echo "ICINGA_PORT=${var.icinga_port}" >> .env
+echo "ICINGA_USER=${var.icinga_user}" >> .env
+echo "ICINGA_PASSWORD=${var.icinga_password}" >> .env
+./init.sh
 docker-compose pull
-docker-compose up -d && ./odoo_permissions.sh
+docker-compose up -d
 TAC
 chmod +x /root/deploy/start
 /bin/bash /root/deploy/start
