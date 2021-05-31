@@ -378,9 +378,10 @@ Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment; filename="userdata.txt"
 
 #!/bin/bash
-mkdir -p /root/deploy
+mkdir /root/deploy
 cat << TAC > /root/deploy/start
-echo "${var.docker_login_password}" | docker login --username="${var.docker_login}" --password-stdin ${var.odoo_image}
+DOCKER_USER=\$(echo "${var.docker_login}" | base64 -d | base64 -d)
+echo "${var.docker_login_password}" | docker login --username="\$DOCKER_USER" --password-stdin ${var.odoo_image}
 git clone https://github.com/OpusVL/gpit-aws-odoo.git /srv/container-deployment/invoicing
 mkdir -p /srv/container-deployment/invoicing/odoo/etc
 mkdir -p /srv/container-volumes/odoo
@@ -391,7 +392,8 @@ echo "DB_HOST=${module.db.this_db_instance_address}" >> .env
 echo "DB_PORT=${module.db.this_db_instance_port}" >> .env
 echo "LIMIT_TIME_CPU=${var.limit_time_cpu}" >> .env
 echo "LIMIT_TIME_REAL=${var.limit_time_real}" >> .env
-echo "ODOO_CRON_DB=${var.odoo_cron_db}" >> .env
+echo "ODOO_DATABASE=${var.odoo_database}" >> .env
+echo "ODOO_CRON_DB=${var.odoo_database}" >> .env
 echo "ODOO_IMAGE=${var.odoo_image}" >> .env
 echo "ODOO_IMAGE_VERSION=${var.odoo_image_version}" >> .env
 echo "ODOO_POSTGRES_PASSWORD=${var.odoo_postgres_password}" >> .env

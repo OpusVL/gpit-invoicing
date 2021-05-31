@@ -74,8 +74,8 @@ variable "hosted_zone_id" {
     description = "ID of hosted zone in route 53 to add alias record to"
 }
 
-variable "odoo_cron_db" {
-    description = "db to run cron on"
+variable "odoo_database" {
+    description = "Odoo database name"
 }
 
 variable "iam_profile" {
@@ -158,4 +158,25 @@ variable app_server_key_name {
 
 variable bastion_host_key_name {
 	description = "key name for the bastion host"
+}
+
+variable host {
+    description = "Name of the host reporting to Icinga2"
+}
+
+variable icinga_host {
+    description = "Name of remote Icinga2 host"
+}
+variable icinga_port {
+    description = "Remote Icinga2 TCP port"
+}
+variable icinga_user {
+    description = "Remote Icinga2 credentials"
+}
+variable icinga_password {
+    description = "Remote Icinga2 credentials"
+}
+
+variable docker_config {
+    description = "Docker config.json as base64 (no line feeds)"
 }
