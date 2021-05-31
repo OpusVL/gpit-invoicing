@@ -74,43 +74,38 @@ The logging driver ensure that output is taken from the Odoo container set and s
 This is a snippet of the `invoicing-base.tf` that shows the scripting used for building the Odoo container set.
 
 ```bash
+#!/bin/bash
+mkdir /root/deploy
 cat << TAC > /root/deploy/start
-docker login -u="${var.docker_login}" -p="${var.docker_login_password}" ${var.odoo_image}
-mkdir -p /srv/container-deployment/syslog-ng
+DOCKER_USER=\$(echo "${var.docker_login}" | base64 -d | base64 -d)
+echo "${var.docker_login_password}" | docker login --username="\$DOCKER_USER" --password-stdin ${var.odoo_image}
+git clone https://github.com/OpusVL/gpit-aws-odoo.git /srv/container-deployment/invoicing
 mkdir -p /srv/container-deployment/invoicing/odoo/etc
 mkdir -p /srv/container-volumes/odoo
-mkdir -p /srv/logs
-gpasswd -a ubuntu docker
-apt -y install postgresql-client
-curl -o /srv/container-deployment/invoicing/odoo/etc/odoo.conf.tpl https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/odoo.conf.tpl
-curl -o /srv/container-deployment/invoicing/docker-compose.yml.tpl https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/docker-compose.yml.tpl
-curl -o /srv/container-deployment/invoicing/.env https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/.env
-curl -o /srv/container-deployment/invoicing/odoo_permissions.sh.tpl https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/odoo_permissions.sh.tpl
-curl -o /srv/container-deployment/invoicing/template.sh https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/template.sh
-curl -o /etc/ssl/openssl.cnf https://raw.githubusercontent.com/nhsconnect/gpit-invoicing/master/deploy/openssl.cnf
-chmod +x /srv/container-deployment/invoicing/*.sh
-cd /srv/container-deployment/invoicing/syslog-ng
-docker-compose pull
-docker-compose up -d
 cd /srv/container-deployment/invoicing
-echo "ADMIN_PASS=${var.admin_pass}" > .env
+echo "ADMIN_PASS=${var.odoo_admin_pass}" > .env
 echo "CONTAINER_VOLUME=/srv/container-volumes" >> .env
-echo "LIMIT_MEMORY_HARD=${var.limit_memory_hard}" >> .env
-echo "LIMIT_MEMORY_SOFT=${var.limit_memory_soft}" >> .env
+echo "DB_HOST=${module.db.this_db_instance_address}" >> .env
+echo "DB_PORT=${module.db.this_db_instance_port}" >> .env
 echo "LIMIT_TIME_CPU=${var.limit_time_cpu}" >> .env
 echo "LIMIT_TIME_REAL=${var.limit_time_real}" >> .env
-echo "ODOO_CRON_DB=${var.odoo_cron_db}" >> .env
+echo "ODOO_DATABASE=${var.odoo_database}" >> .env
+echo "ODOO_CRON_DB=${var.odoo_database}" >> .env
 echo "ODOO_IMAGE=${var.odoo_image}" >> .env
 echo "ODOO_IMAGE_VERSION=${var.odoo_image_version}" >> .env
-echo "ODOO_POSTGRES_PASSWORD=${var.odoo_password}" >> .env
+echo "ODOO_POSTGRES_PASSWORD=${var.odoo_postgres_password}" >> .env
 echo "ODOO_POSTGRES_USER=odoo" >> .env
 echo "POSTGRES_PASSWORD=${var.postgres_password}" >> .env
-echo "RDS_PASS=${var.rds_pass}" >> .env
+echo "RDS_PASS=${var.rds_password}" >> .env
 echo "SMTP_PASSWORD=${var.smtp_password}" >> .env
-chmod +x template
-./template.sh
+echo "HOST=${var.host}" >> .env
+echo "ICINGA_HOST=${var.icinga_host}" >> .env
+echo "ICINGA_PORT=${var.icinga_port}" >> .env
+echo "ICINGA_USER=${var.icinga_user}" >> .env
+echo "ICINGA_PASSWORD=${var.icinga_password}" >> .env
+./init.sh
 docker-compose pull
-docker-compose up -d && ./odoo_permissions.sh
+docker-compose up -d
 TAC
 chmod +x /root/deploy/start
 /bin/bash /root/deploy/start
@@ -129,10 +124,5 @@ Also the `postgresql-client` apps are added to the OS. This allows the update of
 ## Odoo and Module Update Process
 
 ```shell
-docker-compose pull
-docker-compose run --rm odoo -d uat -u ${MODULES_TO_UPGRADE} --stop-after-init
-PGPASSWORD=${POSTGRES_PASSWORD} psql -h gpit-invoicing-db.czoyqvsb5e95.eu-west-2.rds.amazonaws.com -U odoo -d UAT
-```
-```sql
-DELETE FROM ir_attachment WHERE url LIKE '/web/content/%';
+./update.sh
 ```
